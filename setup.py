@@ -27,6 +27,9 @@ def te_version() -> str:
     Includes Git commit as local version, unless suppressed with
     NVTE_NO_LOCAL_VERSION environment variable.
 
+    [augment] We replace the git hash with the string "augment"
+    to identify this as a custom augment release.
+
     """
     with open(root_path / "VERSION", "r") as f:
         version = f.readline().strip()
@@ -43,7 +46,7 @@ def te_version() -> str:
             pass
         else:
             commit = output.stdout.strip()
-            version += f"+{commit}"
+            version += "+augment"
     return version
 
 @lru_cache(maxsize=1)
@@ -290,6 +293,7 @@ def setup_requirements() -> Tuple[List[str], List[str], List[str]]:
 
     # Framework-specific requirements
     if "pytorch" in frameworks():
+        # [augment] We remove the versioning requirement on flash-attn
         add_unique(install_reqs, ["torch", "flash-attn"])
         add_unique(test_reqs, ["numpy", "onnxruntime", "torchvision"])
     if "jax" in frameworks():
