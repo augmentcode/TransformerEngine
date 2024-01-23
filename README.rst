@@ -5,6 +5,31 @@
 
 |License|
 
+Augment Build Instructions
+==========================
+We maintain a fork of TransformerEngine with a small number of modifications. Each augment-specific
+branch is tagged VERSION-augment where VERSION is the release branch forked from upstream. The
+latest version is v0.13-augment.
+
+To build a release wheel for a particular branch, run the following inside a dev container or other
+reasonable build environment:
+
+.. code-block:: bash
+
+  git clone --recursive git@github.com:augmentcode/TransformerEngine.git
+  cd TransformerEngine/
+  git checkout v0.13-augment
+  export NVTE_FRAMEWORK=pytorch  # Don't build TensorFlow bindings even if a TF install is detected
+  export MAX_JOBS=8  # Don't let ninja take over your entire computer
+  python setup.py bdist_wheel
+  # Go prepare a beverage of your choice
+
+After a while, you will get a wheel file at dist/transformer_engine-<stuff>.whl, where <stuff> includes
+both the branch tag as well as system information like the Python version.
+
+TODO: how to upload a wheel file to the augment PyPI server?
+
+
 Transformer Engine
 ==================
 
