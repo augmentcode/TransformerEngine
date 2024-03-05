@@ -27,8 +27,12 @@ reasonable build environment:
 After a while, you will get a wheel file at dist/transformer_engine-<stuff>.whl, where <stuff> includes
 both the branch tag as well as system information like the Python version.
 
-# How to upload a wheel file to the augment PyPI server
-You must be in an environment with gcloud access to system-services-dev.  If twine prompts for a password, `you're doing it wrong <https://cloud.google.com/artifact-registry/docs/python/authentication#keyring-setup>`.
+Upload Instructions
+===================
+
+You must be in an environment with gcloud access to system-services-dev.  If twine prompts for a password, you're doing it wrong
+
+https://cloud.google.com/artifact-registry/docs/python/authentication#keyring-setup
 
 .. code-block:: bash
   pip install twine keyring keyrings.google-artifactregistry-auth
