@@ -5,6 +5,7 @@
 import ctypes
 from functools import lru_cache
 import os
+from packaging.version import parse
 from pathlib import Path
 import re
 import shutil
@@ -33,6 +34,17 @@ def te_version() -> str:
     """
     with open(root_path / "VERSION", "r") as f:
         version = f.readline().strip()
+
+    # [augment] Here is where we replace the git hash with our own versioning.
+    # You can disable this behavior with NVTE_NO_AUGMENT_VERSION=1.
+    if not int(os.getenv("NVTE_NO_AUGMENT_VERSION", "0")):
+        # NOTE: we are assuming you are building for pytorch. TE cannot make this assumption in general.
+        import torch
+        torch_version = parse(torch.__version__)
+        cuda_version = parse(torch.version.cuda)
+        version_string = f".cu{cuda_version.major}{cuda_version.minor}.torch{torch_version.major}{torch_version.minor}"
+        return version + "+augment" + version_string
+
     if not int(os.getenv("NVTE_NO_LOCAL_VERSION", "0")):
         try:
             output = subprocess.run(
@@ -46,7 +58,7 @@ def te_version() -> str:
             pass
         else:
             commit = output.stdout.strip()
-            version += "+augment"
+            version += f"+{commit}"
     return version
 
 @lru_cache(maxsize=1)
