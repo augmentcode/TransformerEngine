@@ -28,6 +28,11 @@ def is_package_installed(package):
 
 def get_te_path():
     """Find Transformer Engine install path using pip"""
+    # [augment] Allow overriding install path with an envvar. Should be something like:
+    # > NVTE_INSTALL_PATH=/opt/conda/lib/python3.9/site-packages
+    if "NVTE_INSTALL_PATH" in os.environ:
+        return os.environ["NVTE_INSTALL_PATH"]
+
     return Path(transformer_engine.__path__[0]).parent
 
 
