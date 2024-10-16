@@ -10,6 +10,48 @@
 
 using namespace transformer_engine::layer_norm;
 
+// [Augment] What follows is a small custom kernel (and launch function) to zero-out a buffer.
+// We use this to replace a call to cudaMemsetAsync, which introduces gaps in cuda graph
+// execution. I am sure there is a more natural place to put this, but I haven't spent the time
+// to figure out the TE build system.
+namespace transformer_engine::layer_norm {
+
+// Kernel itself: simple blockwise loop
+template <typename T>
+__launch_bounds__(128)
+__global__ void zero_out(T *x, const size_t N) {
+    const int tidx = threadIdx.x;
+    const int bidx = blockIdx.x;
+    const int stride = blockDim.x * gridDim.x;
+    for (int i = tidx + bidx * blockDim.x; i < N; i += stride) {
+        x[i] = 0;
+    }
+}
+
+// Launch function: switch over element size and use an appropriate dtype for each.
+// NOTE: if speed ever becomes an issue, this ought to be vectorized.
+void launch_zero_out(void *buf, size_t N, size_t elem_size, cudaStream_t stream) {
+    int num_blocks = DIVUP(static_cast<int>(N), 128);
+    switch (elem_size) {
+        case 1:
+            zero_out<byte><<<num_blocks, 128, 0, stream>>>(reinterpret_cast<byte*>(buf), N);
+            break;
+        case 2:
+            zero_out<fp16><<<num_blocks, 128, 0, stream>>>(reinterpret_cast<fp16*>(buf), N);
+            break;
+        case 4:
+            zero_out<float><<<num_blocks, 128, 0, stream>>>(reinterpret_cast<float*>(buf), N);
+            break;
+        case 8:
+            zero_out<double><<<num_blocks, 128, 0, stream>>>(reinterpret_cast<double*>(buf), N);
+            break;
+        default:
+            break;
+    }
+}
+
+};  // namespace transformer_engine::layer_norm
+
 template<
     typename weight_t,
     typename input_t,

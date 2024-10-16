@@ -31,6 +31,9 @@ Compute always in FP32
 namespace transformer_engine {
 namespace layer_norm {
 
+// [Augment] Forward declare helper kernel added to avoid using memset.
+void launch_zero_out(void *, size_t, size_t, cudaStream_t);
+
 using namespace transformer_engine;
 
 // Create registries and provide runtime versions of config hash functions.
@@ -234,14 +237,18 @@ void layernorm_fwd(const Tensor& x,        // BxSxhidden_size
 
     // Clear buffers
     if ( params.fp8_out ) {
-        cudaMemsetAsync(params.amax, 0,
-                        layer_norm::product(z->amax.shape) *
-                        typeToSize(z->amax.dtype), stream);
+        // [Augment] Use the zero-out kernel, not memset.
+        layer_norm::launch_zero_out(params.amax,
+                                    layer_norm::product(z->amax.shape),
+                                    typeToSize(z->amax.dtype),
+                                    stream);
     }
     if ( launch_params.barrier_size > 0 ) {
-        cudaMemsetAsync(params.barrier, 0,
-                        layer_norm::product(barrier->data.shape) *
-                        typeToSize(barrier->data.dtype), stream);
+        // [Augment] Use the zero-out kernel, not memset.
+        layer_norm::launch_zero_out(params.barrier,
+                                    layer_norm::product(barrier->data.shape),
+                                    typeToSize(barrier->data.dtype),
+                                    stream);
     }
 
     // Launch the kernel.
