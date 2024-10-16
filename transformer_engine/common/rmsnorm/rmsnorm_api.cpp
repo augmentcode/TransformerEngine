@@ -35,6 +35,9 @@ namespace transformer_engine {
 
 namespace layer_norm {
 uint64_t get_key(DType wtype, DType itype, DType otype, DType ctype, uint64_t hidden_size);
+
+// [Augment] Forward declare helper kernel added to avoid using memset.
+void launch_zero_out(void *, size_t, size_t, cudaStream_t);
 }
 
 namespace rmsnorm {
@@ -179,13 +182,18 @@ void rmsnorm_fwd(const Tensor &x, const Tensor &gamma, const float epsilon, Tens
 
     // Clear buffers
     if (params.fp8_out) {
-        cudaMemsetAsync(params.amax, 0, rmsnorm::product(z->amax.shape) * typeToSize(z->amax.dtype),
-                        stream);
+        // [Augment] Use the zero-out kernel, not memset.
+        layer_norm::launch_zero_out(params.amax,
+                                    rmsnorm::product(z->amax.shape),
+                                    typeToSize(z->amax.dtype),
+                                    stream);
     }
     if (launch_params.barrier_size > 0) {
-        cudaMemsetAsync(params.barrier, 0,
-                        rmsnorm::product(barrier->data.shape) * typeToSize(barrier->data.dtype),
-                        stream);
+        // [Augment] Use the zero-out kernel, not memset.
+        layer_norm::launch_zero_out(params.barrier,
+                                    rmsnorm::product(barrier->data.shape),
+                                    typeToSize(barrier->data.dtype),
+                                    stream);
     }
 
     // Launch the kernel.
