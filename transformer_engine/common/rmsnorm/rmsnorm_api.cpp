@@ -182,6 +182,8 @@ void rmsnorm_fwd(const Tensor &x, const Tensor &gamma, const float epsilon, Tens
         params.barrier = reinterpret_cast<int *>(barrier->data.dptr);
     }
 
+    // NOTE[augment]: this envvar exists to restore the prior behavior of TE (ie, use a memset
+    // kernel. So if you want to get the upstream behavior, run with NVTE_FORCE_MEMSET=1.
     const char *envval = std::getenv("NVTE_FORCE_MEMSET");
     bool force_memset = (envval != nullptr) && (std::string(envval) == "1");
     // Clear buffers
