@@ -4,7 +4,9 @@
  * See LICENSE for license information.
  ************************************************************************/
 
+#include <cstdlib>
 #include <numeric>
+#include <string>
 #include <vector>
 #include "../common.h"
 #include "rmsnorm.h"
@@ -35,6 +37,9 @@ namespace transformer_engine {
 
 namespace layer_norm {
 uint64_t get_key(DType wtype, DType itype, DType otype, DType ctype, uint64_t hidden_size);
+
+// [Augment] Forward declare helper kernel added to avoid using memset.
+void launch_zero_out(void *, size_t, size_t, cudaStream_t);
 }
 
 namespace rmsnorm {
@@ -177,15 +182,35 @@ void rmsnorm_fwd(const Tensor &x, const Tensor &gamma, const float epsilon, Tens
         params.barrier = reinterpret_cast<int *>(barrier->data.dptr);
     }
 
+    // NOTE[augment]: this envvar exists to restore the prior behavior of TE (ie, use a memset
+    // kernel. So if you want to get the upstream behavior, run with NVTE_FORCE_MEMSET=1.
+    const char *envval = std::getenv("NVTE_FORCE_MEMSET");
+    bool force_memset = (envval != nullptr) && (std::string(envval) == "1");
     // Clear buffers
     if (params.fp8_out) {
-        cudaMemsetAsync(params.amax, 0, rmsnorm::product(z->amax.shape) * typeToSize(z->amax.dtype),
-                        stream);
+        if (force_memset) {
+            cudaMemsetAsync(params.amax, 0, rmsnorm::product(z->amax.shape) * typeToSize(z->amax.dtype),
+                            stream);
+        } else {
+            // [Augment] Use the zero-out kernel, not memset.
+            layer_norm::launch_zero_out(params.amax,
+                                        rmsnorm::product(z->amax.shape),
+                                        typeToSize(z->amax.dtype),
+                                        stream);
+        }
     }
     if (launch_params.barrier_size > 0) {
-        cudaMemsetAsync(params.barrier, 0,
-                        rmsnorm::product(barrier->data.shape) * typeToSize(barrier->data.dtype),
-                        stream);
+        if (force_memset) {
+            cudaMemsetAsync(params.barrier, 0,
+                            rmsnorm::product(barrier->data.shape) * typeToSize(barrier->data.dtype),
+                            stream);
+        } else {
+            // [Augment] Use the zero-out kernel, not memset.
+            layer_norm::launch_zero_out(params.barrier,
+                                        rmsnorm::product(barrier->data.shape),
+                                        typeToSize(barrier->data.dtype),
+                                        stream);
+        }
     }
 
     // Launch the kernel.
