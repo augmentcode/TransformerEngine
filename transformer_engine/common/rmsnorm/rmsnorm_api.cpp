@@ -4,7 +4,9 @@
  * See LICENSE for license information.
  ************************************************************************/
 
+#include <cstdlib>
 #include <numeric>
+#include <string>
 #include <vector>
 #include "../common.h"
 #include "rmsnorm.h"
@@ -180,20 +182,33 @@ void rmsnorm_fwd(const Tensor &x, const Tensor &gamma, const float epsilon, Tens
         params.barrier = reinterpret_cast<int *>(barrier->data.dptr);
     }
 
+    const char *envval = std::getenv("NVTE_FORCE_MEMSET");
+    bool force_memset = (envval != nullptr) && (std::string(envval) == "1");
     // Clear buffers
     if (params.fp8_out) {
-        // [Augment] Use the zero-out kernel, not memset.
-        layer_norm::launch_zero_out(params.amax,
-                                    rmsnorm::product(z->amax.shape),
-                                    typeToSize(z->amax.dtype),
-                                    stream);
+        if (force_memset) {
+            cudaMemsetAsync(params.amax, 0, rmsnorm::product(z->amax.shape) * typeToSize(z->amax.dtype),
+                            stream);
+        } else {
+            // [Augment] Use the zero-out kernel, not memset.
+            layer_norm::launch_zero_out(params.amax,
+                                        rmsnorm::product(z->amax.shape),
+                                        typeToSize(z->amax.dtype),
+                                        stream);
+        }
     }
     if (launch_params.barrier_size > 0) {
-        // [Augment] Use the zero-out kernel, not memset.
-        layer_norm::launch_zero_out(params.barrier,
-                                    rmsnorm::product(barrier->data.shape),
-                                    typeToSize(barrier->data.dtype),
-                                    stream);
+        if (force_memset) {
+            cudaMemsetAsync(params.barrier, 0,
+                            rmsnorm::product(barrier->data.shape) * typeToSize(barrier->data.dtype),
+                            stream);
+        } else {
+            // [Augment] Use the zero-out kernel, not memset.
+            layer_norm::launch_zero_out(params.barrier,
+                                        rmsnorm::product(barrier->data.shape),
+                                        typeToSize(barrier->data.dtype),
+                                        stream);
+        }
     }
 
     // Launch the kernel.
