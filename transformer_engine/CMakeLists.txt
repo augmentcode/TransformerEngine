@@ -22,7 +22,8 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
 find_package(CUDAToolkit REQUIRED cublas nvToolsExt)
 find_package(CUDNN REQUIRED cudnn)
-find_package(Python COMPONENTS Interpreter Development REQUIRED)
+# NOTE[augment] -- commenting out this line since the Python components are unused and they cause build issues
+# find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
