@@ -29,6 +29,8 @@ def setup_pytorch_extension(
 ) -> setuptools.Extension:
     """Setup CUDA extension for PyTorch support"""
 
+    print("Setting up PyTorch extension")
+
     # Source files
     sources = all_files_in_dir(Path(csrc_source_files), name_extension="cpp")
 

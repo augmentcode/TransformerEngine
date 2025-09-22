@@ -112,6 +112,7 @@ def setup_requirements() -> Tuple[List[str], List[str]]:
 
 
 if __name__ == "__main__":
+    print("Calling setup.py")
     __version__ = te_version()
 
     with open("README.rst", encoding="utf-8") as f:
@@ -158,6 +159,8 @@ if __name__ == "__main__":
                         current_file_path / "transformer_engine",
                     )
                 )
+  
+    print("Configuring package")
 
     # Configure package
     setuptools.setup(
