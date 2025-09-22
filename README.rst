@@ -5,6 +5,40 @@
 
 |License|
 
+Augment Build Instructions
+==========================
+We maintain a fork of TransformerEngine with a small number of modifications. Each augment-specific
+branch is tagged VERSION-augment where VERSION is the release branch forked from upstream. The
+latest version is v2.6-augment.
+
+To build a release wheel for a particular branch, run the following inside a dev container or other
+reasonable build environment:
+
+.. code-block:: bash
+
+  git clone --recursive git@github.com:augmentcode/TransformerEngine.git
+  cd TransformerEngine/
+  git checkout v2.6-augment
+  export NVTE_FRAMEWORK=pytorch  # Don't build TensorFlow bindings even if a TF install is detected
+  export MAX_JOBS=8  # Don't let ninja take over your entire computer
+  python setup.py bdist_wheel
+  # Go prepare a beverage of your choice
+
+After a while, you will get a wheel file at dist/transformer_engine-<stuff>.whl, where <stuff> includes
+both the branch tag as well as system information like the Python version.
+
+Upload Instructions
+===================
+
+You must be in an environment with gcloud access to system-services-dev.  If twine prompts for a password, you're doing it wrong
+
+https://cloud.google.com/artifact-registry/docs/python/authentication#keyring-setup
+
+.. code-block:: bash
+
+  pip install twine keyring keyrings.google-artifactregistry-auth
+  twine upload dist/$WHEEL_FILE --repository-url https://us-central1-python.pkg.dev/system-services-dev/pypi-public
+
 Transformer Engine
 ==================
 
