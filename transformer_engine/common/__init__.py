@@ -95,6 +95,12 @@ def _get_shared_object_file(library: str) -> Path:
     else:
         so_prefix = f"transformer_engine_{library}"
 
+    if "NVTE_INSTALL_PATH" in os.environ:
+        nvte_install_path = Path(os.environ["NVTE_INSTALL_PATH"])
+        so_path = _find_shared_object_in_te_dir(nvte_install_path, so_prefix)
+        assert so_path is not None, f"Could not find shared object file for Transformer Engine {library} lib in NVTE_INSTALL_PATH={nvte_install_path}"
+        return so_path
+
     # Search for shared lib in imported directory
     te_path = Path(importlib.util.find_spec("transformer_engine").origin).parent.parent
     so_path = _find_shared_object_in_te_dir(te_path, so_prefix)
