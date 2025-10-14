@@ -20,7 +20,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
-find_package(CUDAToolkit REQUIRED cublas nvToolsExt)
+find_package(CUDAToolkit REQUIRED cublas)
 find_package(CUDNN REQUIRED cudnn)
 # NOTE[augment] -- commenting out this line since the Python components are unused and they cause build issues
 # find_package(Python COMPONENTS Interpreter Development REQUIRED)
