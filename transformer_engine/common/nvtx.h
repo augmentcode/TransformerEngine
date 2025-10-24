@@ -8,7 +8,7 @@
 #define TRANSFORMER_ENGINE_COMMON_NVTX_H_
 
 #include <string>
-#include <nvToolsExt.h>
+#include <nvtx3/nvToolsExt.h>
 
 namespace transformer_engine::nvtx {
 
