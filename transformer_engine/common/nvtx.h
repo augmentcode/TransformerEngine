@@ -8,13 +8,13 @@
 #define TRANSFORMER_ENGINE_COMMON_NVTX_H_
 
 #include <string>
-#include <nvToolsExt.h>
+#include <nvtx3/nvToolsExt.h>
 
 namespace transformer_engine::nvtx {
 
 struct NVTXWrapper {
   explicit NVTXWrapper(const std::string &name) {
-    nvtxRangePush(name.c_str());
+    nvtxRangePushA(name.c_str());
   }
 
   ~NVTXWrapper() {
