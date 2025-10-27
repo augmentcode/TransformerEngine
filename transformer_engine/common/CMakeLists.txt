@@ -55,7 +55,7 @@ target_link_libraries(transformer_engine PUBLIC
                       CUDA::cuda_driver
                       CUDA::cudart
                       CUDA::nvrtc
-                      CUDA::nvToolsExt
+                      CUDA::nvtx3
                       CUDNN::cudnn)
 target_include_directories(transformer_engine PRIVATE
                            ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
